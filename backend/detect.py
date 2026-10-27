@@ -31,7 +31,7 @@ class DeepFakeDetector:
             init_deit=True
         )
         
-        checkpoint = torch.load(model_path, map_location='cpu')
+        checkpoint = torch.load(model_path, map_location='cpu', weights_only=True)
         state_dict = checkpoint['model']
         
         pos_embed_reshaped = interpolate_pos_embed(state_dict['visual_encoder.pos_embed'], self.model.visual_encoder)
