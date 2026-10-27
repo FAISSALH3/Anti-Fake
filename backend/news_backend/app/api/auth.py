@@ -10,6 +10,7 @@ import os
 from app.utils.common import api_response
 from app.services.auth_service import hash_password, verify_password
 from app.utils.file_util import ensure_dir, allowed_file
+from werkzeug.utils import secure_filename
 auth = Blueprint('auth', __name__)
 
 # 验证码存储(邮箱 -> {code, expires})
@@ -367,25 +368,26 @@ def update_avatar():
     
     if file and allowed_file(file.filename):
         ext = file.filename.rsplit('.', 1)[1].lower()
-        
+        safe_user_id = secure_filename(str(user_id))
+
         profile_dir = ensure_dir(os.path.join(current_app.root_path, '..','static', 'avator'))
         if user.avatar:
             try:
                 old_filename = os.path.basename(user.avatar)
-                old_file_path = os.path.join(profile_dir, old_filename)
-                
+                old_file_path = os.path.join(profile_dir, secure_filename(old_filename))
+
                 if os.path.exists(old_file_path):
                     os.remove(old_file_path)
                     print(f"已删除旧头像: {old_file_path}")
-                
+
                 for ext_type in ['jpg', 'jpeg', 'png']:
-                    potential_old_file = os.path.join(profile_dir, f"{user_id}.{ext_type}")
-                    if os.path.exists(potential_old_file) and potential_old_file != os.path.join(profile_dir, f"{user_id}.{ext}"):
+                    potential_old_file = os.path.join(profile_dir, secure_filename(f"{safe_user_id}.{ext_type}"))
+                    if os.path.exists(potential_old_file) and potential_old_file != os.path.join(profile_dir, secure_filename(f"{safe_user_id}.{ext}")):
                         os.remove(potential_old_file)
                         print(f"已删除其他格式的旧头像: {potential_old_file}")
             except Exception as e:
                 print(f"删除旧头像时出错: {str(e)}")
-        filename = f"{user_id}.{ext}"
+        filename = secure_filename(f"{safe_user_id}.{ext}")
         file_path = os.path.join(profile_dir, filename)
         
         file.save(file_path)
